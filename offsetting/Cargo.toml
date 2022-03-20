@@ -1,0 +1,11 @@
+[package]
+name = "offsetting"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "3.1", features = ["derive", "wrap_help"] }
+color-eyre = "0.6"
+anyhow = "1.0"
+
+offsetting-hash = { path = "../offsetting-hash" }

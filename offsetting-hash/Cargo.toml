@@ -1,0 +1,30 @@
+[package]
+name = "offsetting-hash"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+digest = "0.10"
+blake2 = "0.10"
+fsb = "0.1"
+gost94 = "0.10"
+groestl = "0.10"
+#k12 = "0.2"
+md2 = "0.10"
+md4 = "0.10"
+md-5 = "0.10"
+ripemd = "0.1"
+sha1 = "0.10"
+sha2 = "0.10"
+sha3 = "0.10"
+shabal = "0.4"
+sm3 = "0.4"
+streebog = "0.10"
+tiger = "0.2"
+whirlpool = "0.10"
+
+clap = { version = "3.1", features = ["derive"] }
+owo-colors = "3.2"
+
+hex = "0.4"
+#strum = { version = "0.24", features = ["derive"] }

@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ format('{0}-latest', matrix.os) }}
+
+    strategy:
+      matrix:
+        os: [ubuntu, windows, macos]
+        channel: [stable]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.channel }}
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        continue-on-error: ${{ matrix.channel != 'stable' }}
+        with:
+          command: build
+          args: --release
+          
+      - uses: actions/upload-artifact@v2
+        if: ${{ matrix.channel == 'stable' }}
+        with:
+          name: offsetting_${{ matrix.os }}
+          path: |
+            target/release/offsetting
+            target/release/offsetting.exe

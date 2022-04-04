@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-use offsetting_hash::{execute_hash, HashModule};
+use offsetting_hash::HashModule;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
@@ -11,12 +11,12 @@ struct Args {
 
 #[derive(Subcommand, Debug)]
 enum Module {
-  Hash(HashModule)
+  Hash(HashModule),
 }
 
 fn execute_module(args: Args) {
   match args.module {
-    Module::Hash(data) => execute_hash(data)
+    Module::Hash(module) => module.execute(),
   }
 }
 

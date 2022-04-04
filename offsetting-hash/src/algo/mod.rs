@@ -111,4 +111,3 @@ pub(crate) fn algorithmen() -> [Box<dyn Algorithmus>; 42] {
     Box::new(Whirlpool),
   ]
 }
-

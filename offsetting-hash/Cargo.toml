@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 digest = "0.10"
 blake2 = "0.10"
+#fasthash = {git="https://github.com/flier/rust-fasthash.git"}
 fsb = "0.1"
 gost94 = "0.10"
 groestl = "0.10"

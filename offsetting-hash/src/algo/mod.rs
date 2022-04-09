@@ -5,6 +5,7 @@ use self::groestl::*;
 use self::md2::*;
 use self::md4::*;
 use self::md5::*;
+use self::mmh::*;
 use self::ripemd::*;
 use self::sha1::*;
 use self::sha2::*;
@@ -28,6 +29,7 @@ pub(crate) mod groestl;
 pub(crate) mod md2;
 pub(crate) mod md4;
 pub(crate) mod md5;
+pub(crate) mod mmh;
 pub(crate) mod ripemd;
 pub(crate) mod sha1;
 pub(crate) mod sha2;
@@ -84,6 +86,7 @@ pub(crate) fn algorithmen() -> [Box<dyn Algorithmus>; 42] {
     Box::new(Md2),
     Box::new(Md4),
     Box::new(Md5),
+    // Box::new(MurMurHash),
     Box::new(Ripemd160),
     Box::new(Ripemd256),
     Box::new(Ripemd320),

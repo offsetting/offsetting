@@ -3,10 +3,9 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use soiboy;
-use soiboy::{ComponentData, SoiSoup, Str};
+use indicatif::ProgressBar;
 use soiboy::ComponentKind::Texture;
-use x_flipper_360;
+use soiboy::{ComponentData, SoiSoup, Str};
 use x_flipper_360::{convert_to_dds, TextureHeader, TextureSize2D};
 
 #[derive(Parser, Debug)]
@@ -50,17 +49,24 @@ impl ExtractAction {
     let soup = SoiSoup::cook(self.toc.as_path(), self.soi.as_path())?;
     let mut str = Str::read(self.str.as_path())?;
 
+    let bar = ProgressBar::new(soup.component_count() as u64);
+
     for (section_id, section) in soup.find_sections().iter().enumerate() {
       let section_data = str.read_section_data(section)?;
 
       for component in section_data.uncached {
+        bar.inc(1);
         extract_component(&soup, section_id as u32, &component)?;
       }
 
       for component in section_data.cached {
+        bar.inc(1);
         extract_component(&soup, section_id as u32, &component)?;
       }
     }
+
+    bar.finish_and_clear();
+
     Ok(())
   }
 }
@@ -70,7 +76,12 @@ impl LsAction {
     let soup = SoiSoup::<TextureHeader>::cook(self.toc.as_path(), self.soi.as_path())?;
 
     println!();
-    println!("{:<10} | {:<75} | {}", "Section ID".bold(), "Path".bold(), "Format".bold());
+    println!(
+      "{:<10} | {:<75} | {}",
+      "Section ID".bold(),
+      "Path".bold(),
+      "Format".bold()
+    );
     println!("-----------+-----------------------------------------------------------------------------|-------");
 
     for (section_id, _, component) in soup.find_components() {
@@ -79,9 +90,12 @@ impl LsAction {
         continue;
       }
 
-      let metadata = soup.find_texture_header(section_id,
-                                              component.id as u32,
-                                              component.instance_id as u32)
+      let metadata = soup
+        .find_texture_header(
+          section_id,
+          component.id as u32,
+          component.instance_id as u32,
+        )
         .unwrap()
         .metadata();
 
@@ -99,15 +113,18 @@ impl LsAction {
   }
 }
 
-fn extract_component(soup: &SoiSoup<TextureHeader>, section_id: u32, component: &ComponentData) -> anyhow::Result<()> {
+fn extract_component(
+  soup: &SoiSoup<TextureHeader>,
+  section_id: u32,
+  component: &ComponentData,
+) -> anyhow::Result<()> {
   if component.kind != Texture {
     // TODO:
     return Ok(());
   }
 
-  let metadata = soup.find_texture_header(section_id,
-                                          component.id,
-                                          component.instance_id)
+  let metadata = soup
+    .find_texture_header(section_id, component.id, component.instance_id)
     .unwrap()
     .metadata();
 

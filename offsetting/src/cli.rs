@@ -18,12 +18,12 @@ enum Module {
 
 impl Offsetting {
   pub(crate) fn execute(&self) -> anyhow::Result<()> {
-    return match &self.module {
+    match &self.module {
       Module::Hash(module) => {
         module.execute();
         Ok(())
       }
       Module::X360(module) => module.execute(),
-    };
+    }
   }
 }

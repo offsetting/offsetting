@@ -9,5 +9,6 @@ edition = "2021"
 x-flipper-360 = { git = "https://github.com/offsetting/x-flipper-360" }
 soiboy = { git = "https://github.com/offsetting/soiboy" }
 clap = { version = "3.1", features = ["derive"] }
+indicatif = "0.16"
 colored = "2.0"
 anyhow = "1.0"

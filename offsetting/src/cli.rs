@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
-use offsetting_x360::X360Module;
 
 use offsetting_hash::HashModule;
+use offsetting_x360::X360Module;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
@@ -18,11 +18,12 @@ enum Module {
 
 impl Offsetting {
   pub(crate) fn execute(&self) -> anyhow::Result<()> {
-    match &self.module {
-      Module::Hash(module) => module.execute(),
+    return match &self.module {
+      Module::Hash(module) => {
+        module.execute();
+        Ok(())
+      }
       Module::X360(module) => module.execute(),
-    }
-
-    Ok(())
+    };
   }
 }

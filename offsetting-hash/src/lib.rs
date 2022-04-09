@@ -3,40 +3,7 @@ use colored::Colorize;
 
 use crate::algo::algorithmen;
 
-// use algo::blake2::*;
-// use algo::fsb::*;
-// use algo::gost94::*;
-// use algo::groestl::*;
-// use algo::md2::*;
-// use algo::md4::*;
-// use algo::md5::*;
-// use algo::ripemd::*;
-// use algo::sha1::*;
-// use algo::sha2::*;
-// use algo::sha3::*;
-// use algo::shabal::*;
-// use algo::sm3::*;
-// use algo::streebog::*;
-// use algo::tiger::*;
-// use algo::whirlpool::*;
-
 mod algo;
-
-// macro_rules! print_hash {
-//   ($algo: expr, $input: expr) => {
-//     println!(
-//       "{0:<15} | {1}",
-//       $algo.name().bright_green(),
-//       hex::encode($algo.hash($input.as_bytes()).as_slice())
-//     )
-//   };
-// }
-
-// macro_rules! print_separator {
-//   () => {
-//     println!("                |");
-//   };
-// }
 
 #[derive(Parser, Debug)]
 pub struct HashModule {

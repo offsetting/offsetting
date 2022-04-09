@@ -4,7 +4,7 @@ use offsetting_hash::HashModule;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
-struct Args {
+pub(crate) struct Offsetting {
   #[clap(subcommand)]
   module: Module,
 }
@@ -14,14 +14,12 @@ enum Module {
   Hash(HashModule),
 }
 
-fn execute_module(args: Args) {
-  match args.module {
-    Module::Hash(module) => module.execute(),
+impl Offsetting {
+  pub(crate) fn execute(&self) -> anyhow::Result<()> {
+    match &self.module {
+      Module::Hash(module) => module.execute(),
+    }
+
+    Ok(())
   }
-}
-
-pub fn execute() {
-  let args = Args::parse();
-
-  execute_module(args);
 }

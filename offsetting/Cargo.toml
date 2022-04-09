@@ -8,3 +8,4 @@ clap = { version = "3.1", features = ["derive", "wrap_help"] }
 anyhow = "1.0"
 
 offsetting-hash = { path = "../offsetting-hash" }
+offsetting-x360 = { path = "../offsetting-x360" }

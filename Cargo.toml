@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "offsetting",
-    "offsetting-hash"
+    "offsetting-hash",
+    "offsetting-x360"
 ]
 
 [profile.release]

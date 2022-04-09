@@ -24,7 +24,6 @@ pub(crate) mod blake2;
 pub(crate) mod fsb;
 pub(crate) mod gost94;
 pub(crate) mod groestl;
-// pub(crate) mod k12;
 pub(crate) mod md2;
 pub(crate) mod md4;
 pub(crate) mod md5;
@@ -84,6 +83,7 @@ pub(crate) fn algorithmen() -> [Box<dyn Algorithmus>; 42] {
     Box::new(Md2),
     Box::new(Md4),
     Box::new(Md5),
+    // Box::new(MurMurHash),
     Box::new(Ripemd160),
     Box::new(Ripemd256),
     Box::new(Ripemd320),

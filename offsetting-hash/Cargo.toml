@@ -24,7 +24,7 @@ tiger = "0.2"
 whirlpool = "0.10"
 
 clap = { version = "3.1", features = ["derive"] }
-owo-colors = "3.2"
+colored = "2.0"
 
 hex = "0.4"
 #strum = { version = "0.24", features = ["derive"] }

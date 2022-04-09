@@ -1,5 +1,5 @@
 use clap::Parser;
-use owo_colors::OwoColorize;
+use colored::Colorize;
 
 use crate::algo::algorithmen;
 

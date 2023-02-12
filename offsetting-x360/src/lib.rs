@@ -144,8 +144,8 @@ fn extract_component(
       _ => panic!("{:?}", metadata.format()),
     },
     mipmap_levels: Some(1.max(metadata.max_mip_level() - metadata.min_mip_level()) as u32),
-    base_address: metadata.base_address() as u32,
-    mip_address: metadata.mip_address() as u32,
+    base_address: metadata.base_address(),
+    mip_address: metadata.mip_address(),
   };
 
   let path = PathBuf::from(format!("data/out/{}.dds", component.path));

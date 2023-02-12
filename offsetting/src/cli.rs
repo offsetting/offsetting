@@ -4,7 +4,7 @@ use offsetting_hash::HashModule;
 use offsetting_x360::X360Module;
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about)]
+#[clap(version)]
 pub(crate) struct Offsetting {
   #[clap(subcommand)]
   module: Module,

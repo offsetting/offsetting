@@ -1,14 +1,12 @@
 [package]
 name = "offsetting-x360"
-version = "0.1.0"
+version = "0.0.0-git"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 x-flipper-360 = { git = "https://github.com/offsetting/x-flipper-360" }
 soiboy = { git = "https://github.com/offsetting/soiboy" }
-clap = { version = "3.1", features = ["derive"] }
-indicatif = "0.16"
+clap = { version = "4.1", features = ["derive"] }
+indicatif = "0.17"
 colored = "2.0"
 anyhow = "1.0"

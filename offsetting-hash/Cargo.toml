@@ -1,6 +1,6 @@
 [package]
 name = "offsetting-hash"
-version = "0.1.0"
+version = "0.0.0-git"
 edition = "2021"
 
 [dependencies]
@@ -24,7 +24,7 @@ streebog = "0.10"
 tiger = "0.2"
 whirlpool = "0.10"
 
-clap = { version = "3.1", features = ["derive"] }
+clap = { version = "4.1", features = ["derive"] }
 colored = "2.0"
 
 hex = "0.4"

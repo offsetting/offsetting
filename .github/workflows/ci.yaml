@@ -3,38 +3,80 @@ name: CI
 on:
   push:
     branches: [ main ]
+    tags: [ '*' ]
   pull_request:
-    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: ${{ format('{0}-latest', matrix.os) }}
+    runs-on: ${{ matrix.os }}-latest
+
+    permissions:
+      contents: write
 
     strategy:
       matrix:
-        os: [ubuntu, windows, macos]
-        channel: [stable]
+        os: [ ubuntu, windows, macos ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/cache@v3
         with:
-          toolchain: ${{ matrix.channel }}
-          target: ${{ matrix.target }}
-          override: true
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Find Version
+        if: startsWith(github.ref, 'refs/tags/')
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: image
+          tags: type=semver,pattern={{version}}
+
+      - name: Set Cargo.toml version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" offsetting/Cargo.toml          
+          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" offsetting-hash/Cargo.toml
+          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" offsetting-x360/Cargo.toml
+
+          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" Cargo.lock
 
       - name: Build
-        uses: actions-rs/cargo@v1
-        continue-on-error: ${{ matrix.channel != 'stable' }}
-        with:
-          command: build
-          args: --release
-          
-      - uses: actions/upload-artifact@v2
-        if: ${{ matrix.channel == 'stable' }}
+        run: cargo build --release
+
+      - name: Rename binary
+        if: matrix.os != 'windows'
+        run: |
+          mv target/release/offsetting offsetting_${{ matrix.os }}
+
+      - name: Rename binary (win)
+        if: matrix.os == 'windows'
+        run: |
+          mv target/release/offsetting.exe offsetting_${{ matrix.os }}.exe
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
           name: offsetting_${{ matrix.os }}
-          path: |
-            target/release/offsetting
-            target/release/offsetting.exe
+          path: offsetting_${{ matrix.os }}*
+
+      - uses: alexellis/upload-assets@0.4.0
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_paths: '["offsetting_${{ matrix.os }}*"]'

@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 
 use offsetting_hash::HashModule;
+use offsetting_indctive::IndctiveModule;
 use offsetting_x360::X360Module;
 
 #[derive(Parser, Debug)]
@@ -14,6 +15,7 @@ pub(crate) struct Offsetting {
 enum Module {
   Hash(HashModule),
   X360(X360Module),
+  Dct(IndctiveModule),
 }
 
 impl Offsetting {
@@ -24,6 +26,7 @@ impl Offsetting {
         Ok(())
       }
       Module::X360(module) => module.execute(),
+      Module::Dct(module) => module.execute(),
     }
   }
 }

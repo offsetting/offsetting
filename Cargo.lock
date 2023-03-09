@@ -342,7 +342,7 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 [[package]]
 name = "indctive"
 version = "0.0.0-git"
-source = "git+https://github.com/offsetting/indctive#fecaa71dbbafb8cc058f46cac45ebf68d517d5d1"
+source = "git+https://github.com/offsetting/indctive#e88d8d6bf1cf2ecabd43722109f36b9bc723fde2"
 dependencies = [
  "binrw",
  "jenkins_hash",
@@ -532,7 +532,7 @@ dependencies = [
 
 [[package]]
 name = "offsetting-indctive"
-version = "0.1.0"
+version = "0.0.0-git"
 dependencies = [
  "anyhow",
  "clap",
@@ -943,7 +943,7 @@ checksum = "447660ad36a13288b1db4d4248e857b510e8c3a225c822ba4fb748c0aafecffd"
 [[package]]
 name = "x-flipper-360"
 version = "0.1.0"
-source = "git+https://github.com/offsetting/x-flipper-360#e6608ac65b5286e35b1b6499ea118e716784c430"
+source = "git+https://github.com/offsetting/x-flipper-360#ce4e1b1e481ef58c1014412f3b62b087deee9a06"
 dependencies = [
  "binrw",
  "dds",

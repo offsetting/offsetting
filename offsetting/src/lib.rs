@@ -5,7 +5,7 @@ use offsetting_x360::X360Module;
 
 #[derive(Parser, Debug)]
 #[clap(version)]
-pub(crate) struct Offsetting {
+pub struct Offsetting {
   #[clap(subcommand)]
   module: Module,
 }
@@ -17,7 +17,7 @@ enum Module {
 }
 
 impl Offsetting {
-  pub(crate) fn execute(&self) -> anyhow::Result<()> {
+  pub fn execute(&self) -> anyhow::Result<()> {
     match &self.module {
       Module::Hash(module) => {
         module.execute();

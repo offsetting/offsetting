@@ -1,0 +1,8 @@
+[package]
+name = "offsetting-gui"
+version = "0.0.0-git"
+edition = "2021"
+
+[dependencies]
+klask = { git = "https://github.com/MarcelCoding/klask" }
+offsetting = { path = "../offsetting" }

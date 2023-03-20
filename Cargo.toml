@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "offsetting",
+    "offsetting-gui",
     "offsetting-hash",
     "offsetting-x360"
 ]

@@ -3,7 +3,8 @@ members = [
     "offsetting",
     "offsetting-gui",
     "offsetting-hash",
-    "offsetting-x360"
+    "offsetting-indctive",
+    "offsetting-x360",
 ]
 
 [profile.release]

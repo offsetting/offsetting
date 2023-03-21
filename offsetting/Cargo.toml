@@ -2,10 +2,14 @@
 name = "offsetting"
 version = "0.0.0-git"
 edition = "2021"
+authors = ["Team Offsetting"]
+repository = "https://github.com/offsetting/offsetting"
+description = "A collection of modding tools based on the libraries created by Team Offsetting."
 
 [dependencies]
 clap = { version = "4.1", features = ["derive"] }
 anyhow = "1.0"
 
 offsetting-hash = { path = "../offsetting-hash" }
+offsetting-indctive = { path = "../offsetting-indctive" }
 offsetting-x360 = { path = "../offsetting-x360" }

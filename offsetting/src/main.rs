@@ -1,8 +1,8 @@
 use clap::Parser;
 
-use crate::cli::Offsetting;
+use crate::lib::Offsetting;
 
-mod cli;
+mod lib;
 
 fn main() -> anyhow::Result<()> {
   Offsetting::parse().execute()

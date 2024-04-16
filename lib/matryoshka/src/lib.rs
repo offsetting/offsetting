@@ -5,6 +5,7 @@ pub use binrw::Endian;
 use binrw::{BinReaderExt, BinWriterExt, NullString};
 use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::header::OctHeader;
 use crate::node::{Node, NodeData, RawNode};
@@ -25,6 +26,7 @@ pub enum Data {
   Container(IndexMap<String, ContainerData>),
 
   Binary(#[serde(with = "base64")] Vec<u8>),
+  Uuid(Uuid),
 
   Int(i32),
   IntVec(Vec<i32>),
@@ -226,6 +228,7 @@ fn extract_nodes(nodes: &mut Vec<RawNode>, data: IndexMap<String, ContainerData>
               Data::Int(data) => NodeData::Int(data),
               Data::IntVec(data) => NodeData::IntVec(data),
               Data::Binary(data) => NodeData::Binary(data),
+              Data::Uuid(data) => NodeData::Uuid(data),
             },
           },
         });
@@ -267,6 +270,7 @@ impl TryFrom<NodeData> for Data {
       NodeData::Int(str_vec) => Data::Int(str_vec),
       NodeData::IntVec(str_vec) => Data::IntVec(str_vec),
       NodeData::Binary(str_vec) => Data::Binary(str_vec),
+      NodeData::Uuid(uuid) => Data::Uuid(uuid),
     })
   }
 }
@@ -297,6 +301,7 @@ impl From<Data> for NodeData {
       Data::Int(data) => NodeData::Int(data),
       Data::IntVec(data) => NodeData::IntVec(data),
       Data::Binary(data) => NodeData::Binary(data),
+      Data::Uuid(data) => NodeData::Uuid(data),
     }
   }
 }

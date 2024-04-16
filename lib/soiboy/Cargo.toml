@@ -5,9 +5,9 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-modular-bitfield = "0.11"
-flate2 = "1.0"
-binrw = "0.13"
+modular-bitfield = { version = "0.11", default-features = false }
+flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
+binrw = { version = "0.13", default-features = false }
 
 [dev-dependencies]
 x-flipper-360 = { path = "../x-flipper-360" }

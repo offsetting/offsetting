@@ -2,6 +2,7 @@ use std::io::{Read, Seek, Write};
 
 use binrw::{BinRead, BinReaderExt, BinResult, BinWrite, BinWriterExt, Endian, Error};
 use modular_bitfield::prelude::*;
+use uuid::{Bytes, Uuid};
 
 #[derive(Debug)]
 pub(crate) struct Node {
@@ -22,6 +23,7 @@ pub(crate) enum NodeData {
   Int(i32),
   IntVec(Vec<i32>),
 
+  Uuid(Uuid),
   Binary(Vec<u8>),
 }
 
@@ -129,7 +131,7 @@ impl BinRead for RawNode {
           vec
         }),
 
-        (DataType::Binary, Type::Scalar) => NodeData::Binary({
+        (DataType::Binary, Type::Scalar) => {
           assert_ne!(
             int_site, 0,
             "Binary file name hint index is set, todo: impl me"
@@ -141,8 +143,21 @@ impl BinRead for RawNode {
             vec.push(reader.read_type(endian)?);
           }
 
-          vec
-        }),
+          // special case, uuids are encoded as binary
+          if len == 16 && &key == "Uuid" {
+            let mut bytes: Bytes = [0; 16];
+            bytes.copy_from_slice(vec.as_slice());
+
+            let uuid = match endian {
+              Endian::Big => Uuid::from_bytes(bytes),
+              Endian::Little => Uuid::from_bytes_le(bytes),
+            };
+
+            NodeData::Uuid(uuid)
+          } else {
+            NodeData::Binary(vec)
+          }
+        }
 
         x => unimplemented!("{:?}", x),
       },
@@ -249,6 +264,7 @@ impl BinWrite for RawNode {
         len_size = get_u32_size(len as u32);
         (DataType::Binary, Type::Scalar)
       }
+      NodeData::Uuid(_) => (DataType::Binary, Type::Scalar),
     };
 
     let key;
@@ -309,6 +325,14 @@ impl BinWrite for RawNode {
         for x in data {
           writer.write_type(x, endian)?;
         }
+      }
+      NodeData::Uuid(uuid) => {
+        writer.write_type(&16u8, endian)?;
+        let bytes = match endian {
+          Endian::Big => uuid.as_bytes().clone(),
+          Endian::Little => uuid.to_bytes_le(),
+        };
+        writer.write_all(&bytes)?;
       }
     };
 

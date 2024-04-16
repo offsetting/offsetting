@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 modular-bitfield = "0.11"
 flate2 = "1.0"
-binrw = "0.11"
+binrw = "0.13"
 
 [dev-dependencies]
 x-flipper-360 = { path = "../x-flipper-360" }

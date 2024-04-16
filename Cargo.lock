@@ -109,37 +109,13 @@ checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
 
 [[package]]
 name = "binrw"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab81d22cbd2d745852348b2138f3db2103afa8ce043117a374581926a523e267"
-dependencies = [
- "array-init",
- "binrw_derive 0.11.2",
- "bytemuck",
-]
-
-[[package]]
-name = "binrw"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "173901312e9850391d4d7c1318c4e099fdc037d61870fca427429830efdb4e5f"
 dependencies = [
  "array-init",
- "binrw_derive 0.13.3",
+ "binrw_derive",
  "bytemuck",
-]
-
-[[package]]
-name = "binrw_derive"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6b019a3efebe7f453612083202887b6f1ace59e20d010672e336eea4ed5be97"
-dependencies = [
- "either",
- "owo-colors",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -149,6 +125,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb515fdd6f8d3a357c8e19b8ec59ef53880807864329b1cb1cba5c53bf76557e"
 dependencies = [
  "either",
+ "owo-colors",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -387,7 +364,7 @@ version = "0.0.0-git"
 dependencies = [
  "anyhow",
  "base64",
- "binrw 0.13.3",
+ "binrw",
  "indexmap",
  "modular-bitfield",
  "serde",
@@ -558,7 +535,7 @@ dependencies = [
 name = "soiboy"
 version = "0.0.0-git"
 dependencies = [
- "binrw 0.11.2",
+ "binrw",
  "flate2",
  "modular-bitfield",
  "x-flipper-360",
@@ -765,7 +742,7 @@ checksum = "bec47e5bfd1bff0eeaf6d8b485cc1074891a197ab4225d504cb7a1ab88b02bf0"
 name = "x-flipper-360"
 version = "0.0.0-git"
 dependencies = [
- "binrw 0.11.2",
+ "binrw",
  "dds",
  "modular-bitfield",
 ]

@@ -8,34 +8,34 @@ use soiboy::ComponentKind::Texture;
 use soiboy::{ComponentData, SoiSoup, Str};
 use x_flipper_360::{convert_to_dds, TextureHeader, TextureSize2D};
 
-#[derive(Parser, Debug)]
-pub struct X360Module {
+#[derive(Parser)]
+pub(super) struct X360Module {
   #[clap(subcommand)]
   action: Action,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand)]
 pub(crate) enum Action {
   Unpack(UnpackAction),
   Repack,
   Ls(LsAction),
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 pub(crate) struct UnpackAction {
   soi: PathBuf,
   toc: PathBuf,
   str: PathBuf,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 pub(crate) struct LsAction {
   soi: PathBuf,
   toc: PathBuf,
 }
 
 impl X360Module {
-  pub fn execute(&self) -> anyhow::Result<()> {
+  pub(super) fn execute(&self) -> anyhow::Result<()> {
     match &self.action {
       Action::Unpack(action) => action.execute(),
       Action::Repack => Ok(()),

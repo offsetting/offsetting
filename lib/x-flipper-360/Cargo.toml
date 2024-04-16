@@ -1,7 +1,8 @@
 [package]
 name = "x-flipper-360"
-version = "0.1.0"
+version = "0.0.0-git"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 dds = { git = "https://github.com/offsetting/dds" }

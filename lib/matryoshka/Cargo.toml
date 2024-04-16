@@ -1,0 +1,13 @@
+[package]
+name = "matryoshka"
+version = "0.0.0-git"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+binrw = { version = "0.13", default-features = false, features = ["std"] }
+anyhow = { version = "1.0", default-features = false, features = ["backtrace"] }
+indexmap = { version = "2.0", default-features = false, features = ["serde"] }
+base64 = { version = "0.22", default-features = false, features = ["alloc"] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+modular-bitfield = { version = "0.11", default-features = false }

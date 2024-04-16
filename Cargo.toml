@@ -4,6 +4,7 @@ members = [
   "bin/offsetting",
   "lib/x-flipper-360",
   "lib/soiboy",
+  "lib/matryoshka",
 ]
 
 [profile.release]

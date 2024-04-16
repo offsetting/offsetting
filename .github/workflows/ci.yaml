@@ -49,41 +49,32 @@ jobs:
       - name: Set Cargo.toml version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" offsetting/Cargo.toml          
-          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" offsetting-gui/Cargo.toml     
-          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" offsetting-hash/Cargo.toml
-          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" offsetting-x360/Cargo.toml
+          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" bin/offsetting/Cargo.toml          
+          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" lib/soiboy/Cargo.toml     
+          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" lib/x-flipper-360/Cargo.toml
 
           perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" Cargo.lock
-
-      - name: Install dependencies
-        if: matrix.os == 'ubuntu'
-        run: sudo apt-get install -y libatk1.0-dev libgtk-3-dev
 
       - name: Build
         run: cargo build --release
 
       - name: Rename binary
         if: matrix.os != 'windows'
-        run: |
-          mv target/release/offsetting offsetting_${{ matrix.os }}
-          mv target/release/offsetting-gui offsetting-gui_${{ matrix.os }}
+        run: mv target/release/offsetting offsetting_${{ matrix.os }}
 
       - name: Rename binary (win)
         if: matrix.os == 'windows'
-        run: |
-          mv target/release/offsetting.exe offsetting_${{ matrix.os }}.exe
-          mv target/release/offsetting-gui.exe offsetting-gui_${{ matrix.os }}.exe
+        run: mv target/release/offsetting.exe offsetting_${{ matrix.os }}.exe
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: offsetting_${{ matrix.os }}
-          path: offsetting*_${{ matrix.os }}*
+          path: offsetting_${{ matrix.os }}*
 
       - uses: alexellis/upload-assets@0.4.0
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_paths: '["offsetting*_${{ matrix.os }}*"]'
+          asset_paths: '["offsetting_${{ matrix.os }}*"]'

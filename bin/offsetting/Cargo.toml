@@ -1,0 +1,13 @@
+[package]
+name = "offsetting"
+version = "0.0.0-git"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1.0"
+
+x-flipper-360 = { path = "../../lib/x-flipper-360" }
+soiboy = { path = "../../lib/soiboy" }
+indicatif = "0.17"
+colored = "2.1"

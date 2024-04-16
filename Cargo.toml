@@ -1,9 +1,9 @@
 [workspace]
+resolver = "2"
 members = [
-    "offsetting",
-    "offsetting-gui",
-    "offsetting-hash",
-    "offsetting-x360"
+  "bin/offsetting",
+  "lib/x-flipper-360",
+  "lib/soiboy",
 ]
 
 [profile.release]

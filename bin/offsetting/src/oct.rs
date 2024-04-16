@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
-pub(super) struct MatryoshkaModule {
+pub(super) struct OctModule {
   #[clap(subcommand)]
   command: Command,
 }
@@ -68,7 +68,7 @@ enum Command {
   },
 }
 
-impl MatryoshkaModule {
+impl OctModule {
   pub(super) fn execute(self) -> anyhow::Result<()> {
     match self.command {
       Command::Decode {

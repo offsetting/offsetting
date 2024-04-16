@@ -3,8 +3,8 @@ use clap::{Parser, Subcommand};
 use crate::matryoshka::MatryoshkaModule;
 use crate::x360::X360Module;
 
-mod x360;
 mod matryoshka;
+mod x360;
 
 #[derive(Parser)]
 #[clap(version)]

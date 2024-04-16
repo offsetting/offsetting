@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
-pub(super)struct MatryoshkaModule {
+pub(super) struct MatryoshkaModule {
   #[clap(subcommand)]
   command: Command,
 }

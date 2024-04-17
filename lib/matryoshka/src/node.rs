@@ -4,6 +4,8 @@ use binrw::{BinRead, BinReaderExt, BinResult, BinWrite, BinWriterExt, Endian, Er
 use modular_bitfield::prelude::*;
 use uuid::{Bytes, Uuid};
 
+const UUID_KEY: &str = "Uuid";
+
 #[derive(Debug)]
 pub(crate) struct Node {
   pub(crate) id: String,
@@ -76,7 +78,7 @@ impl BinRead for RawNode {
     let header = NodeHeader::from(header_data);
 
     let key_idx: u16 = reader.read_type(endian)?;
-    let key = args[key_idx as usize].clone();
+    let key = &args[key_idx as usize];
 
     let name = if header.name() {
       let name_idx: u16 = reader.read_type(endian)?;
@@ -144,7 +146,7 @@ impl BinRead for RawNode {
           }
 
           // special case, uuids are encoded as binary
-          if len == 16 && &key == "Uuid" {
+          if len == 16 && key == UUID_KEY {
             let mut bytes: Bytes = [0; 16];
             bytes.copy_from_slice(vec.as_slice());
 

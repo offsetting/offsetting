@@ -153,7 +153,9 @@ fn find_and_extract_textures(
             Some(ContainerData::Single(Data::Binary(data))),
           ) = (container.get(PATH_KEY), container.get(DATA_KEY))
           {
-            let out = output_path.join(path.replace('\\', std::path::MAIN_SEPARATOR_STR)).with_extension(DDS);
+            let out = output_path
+              .join(path.replace('\\', std::path::MAIN_SEPARATOR_STR))
+              .with_extension(DDS);
             println!("Extracting: {}", out.to_string_lossy());
 
             if let Some(parent) = out.parent() {
@@ -165,8 +167,10 @@ fn find_and_extract_textures(
             let mut texture_file = File::create(&out)?;
             texture_file.write_all(data)?;
 
-            *container.get_mut(DATA_KEY).unwrap() =
-              ContainerData::Single(Data::String(format!("file:{}", out.strip_prefix(output_path)?.to_string_lossy())));
+            *container.get_mut(DATA_KEY).unwrap() = ContainerData::Single(Data::String(format!(
+              "file:{}",
+              out.strip_prefix(output_path)?.to_string_lossy()
+            )));
             continue;
           }
         }

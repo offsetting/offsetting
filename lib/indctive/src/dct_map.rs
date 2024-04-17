@@ -179,7 +179,7 @@ impl DctMap {
         .text
         .as_ref()
         .expect("line_id is not 0 but text is none");
-      let text_offset = get_footer_offset_from_string(&text);
+      let text_offset = get_footer_offset_from_string(text);
 
       let bin_line_entry = BinDctLineEntry {
         line_id: line_entry.line_id,
@@ -265,7 +265,7 @@ impl DctMap {
   pub fn add_line_entry(&mut self, key: &str, text: &str) -> Result<(), DctLineError> {
     let hashed_key = lookup2(key.as_bytes(), self.initial_hash_value);
 
-    return match self.mod_entry_lookup(hashed_key) {
+    match self.mod_entry_lookup(hashed_key) {
       None => Err(CapacityExceeded),
       Some(entry_index) => {
         let entry = &mut self.line_entries[entry_index];
@@ -279,7 +279,7 @@ impl DctMap {
 
         Ok(())
       }
-    };
+    }
   }
 
   pub fn get_initial_hash_value(&self) -> u32 {
@@ -328,7 +328,7 @@ impl<'a> Iterator for DctLineEntryIterator<'a> {
       let entry = &self.dct_map.line_entries[self.index];
       self.index += 1;
       if entry.line_id != 0 {
-        return Some((entry.line_id.clone(), &entry.text.as_ref().unwrap()));
+        return Some((entry.line_id, &entry.text.as_ref().unwrap()));
       }
     }
   }

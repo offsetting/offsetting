@@ -1,11 +1,13 @@
-use clap::{Parser, Subcommand};
-use indctive::dct_map::{DctMap, FooterEntry, FooterSubEntry};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
+
+use clap::{Parser, Subcommand};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use indctive::dct_map::{DctMap, FooterEntry, FooterSubEntry};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct SerdeMetadata {
@@ -26,17 +28,17 @@ impl From<FooterEntry> for SerdeFooterEntry {
       sub_entries: value
         .sub_entries
         .into_iter()
-        .map(|entry| SerdeFooterSubEntry::from(entry))
+        .map(SerdeFooterSubEntry::from)
         .collect(),
     }
   }
 }
 
-impl Into<FooterEntry> for SerdeFooterEntry {
-  fn into(self) -> FooterEntry {
+impl From<SerdeFooterEntry> for FooterEntry {
+  fn from(val: SerdeFooterEntry) -> Self {
     FooterEntry {
-      text: self.text,
-      sub_entries: self
+      text: val.text,
+      sub_entries: val
         .sub_entries
         .into_iter()
         .map(|entry| entry.into())
@@ -60,11 +62,11 @@ impl From<FooterSubEntry> for SerdeFooterSubEntry {
   }
 }
 
-impl Into<FooterSubEntry> for SerdeFooterSubEntry {
-  fn into(self) -> FooterSubEntry {
+impl From<SerdeFooterSubEntry> for FooterSubEntry {
+  fn from(val: SerdeFooterSubEntry) -> Self {
     FooterSubEntry {
-      text: self.text,
-      to_map_to: self.to_map_to,
+      text: val.text,
+      to_map_to: val.to_map_to,
     }
   }
 }
@@ -138,7 +140,7 @@ impl UnpackAction {
     let footer_entries: Vec<SerdeFooterEntry> = lang_dct
       .footer_entries
       .into_iter()
-      .map(|entry| SerdeFooterEntry::from(entry))
+      .map(SerdeFooterEntry::from)
       .collect();
 
     let metadata = SerdeMetadata {

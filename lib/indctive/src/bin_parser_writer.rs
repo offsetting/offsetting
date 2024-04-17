@@ -5,7 +5,7 @@ fn parse_absolute_offset<R: Read + Seek>(reader: &mut R, endian: Endian) -> BinR
   let stream_pos: u64 = reader.stream_position()?;
 
   let mut byte_array = [0u8; 4];
-  reader.read(&mut byte_array[..])?;
+  reader.read_exact(&mut byte_array[..])?;
 
   let relative_offset = match endian {
     Endian::Big => u32::from_be_bytes(byte_array),
@@ -48,7 +48,7 @@ fn write_relative_offset<R: Write + Seek>(
     Endian::Little => (relative_offset as u32).to_le_bytes(),
   };
 
-  writer.write(&byte_array)?;
+  writer.write_all(&byte_array)?;
   Ok(())
 }
 

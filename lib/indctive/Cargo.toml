@@ -1,9 +1,10 @@
 [package]
 name = "indctive"
-version = "0.1.0"
+version = "0.0.0-git"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
-binrw = "0.13"
-jenkins_hash = "0.2"
-thiserror = "1.0"
+binrw = { version = "0.13", default-features = false, features = ["std"] }
+jenkins_hash = { version = "0.2", default-features = false }
+thiserror = { version = "1.0", default-features = false }

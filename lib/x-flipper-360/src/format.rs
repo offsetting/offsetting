@@ -41,7 +41,7 @@ pub(crate) const RGBA8: FormatData = FormatData {
   bytes_per_block: 4,
 };
 
-pub(crate) fn get_dds_format(format: &Format) -> D3DFormat {
+pub(crate) const fn get_dds_format(format: &Format) -> D3DFormat {
   match format {
     Format::Dxt1 => D3DFormat::DXT1,
     Format::Dxt3 => D3DFormat::DXT3,
@@ -50,7 +50,7 @@ pub(crate) fn get_dds_format(format: &Format) -> D3DFormat {
   }
 }
 
-pub(crate) fn get_format_data(format: &Format) -> FormatData {
+pub(crate) const fn get_format_data(format: &Format) -> FormatData {
   match format {
     Format::Dxt1 => DXT1,
     Format::Dxt3 => DXT3,

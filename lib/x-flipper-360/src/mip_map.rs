@@ -241,11 +241,11 @@ impl<'a> TextureInfo<'a> {
 // https://github.com/xenia-project/xenia/blob/master/src/xenia/gpu/texture_info.cc
 // see /licenses/xenia.txt
 impl TextureExtent {
-  fn all_blocks(&self) -> u32 {
+  const fn all_blocks(&self) -> u32 {
     self.block_pitch_h * self.block_pitch_v * self.depth
   }
 
-  fn calculate(
+  const fn calculate(
     format: &FormatData,
     pitch: u32,
     height: u32,

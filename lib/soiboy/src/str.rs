@@ -34,7 +34,7 @@ impl Str {
     Ok(Self::read_file(file))
   }
 
-  pub fn read_file(file: File) -> Self {
+  pub const fn read_file(file: File) -> Self {
     Self { file }
   }
 

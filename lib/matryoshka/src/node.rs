@@ -177,7 +177,7 @@ fn find(strings: &[String], string: &str) -> u16 {
   panic!("Can't find string");
 }
 
-fn get_u32_size(i: u32) -> u8 {
+const fn get_u32_size(i: u32) -> u8 {
   let actual_bits = 32 - i.leading_zeros();
 
   let bytes_used = actual_bits / 8;
@@ -192,7 +192,7 @@ fn get_u32_size(i: u32) -> u8 {
   }) as u8
 }
 
-fn get_i32_size(i: i32) -> u8 {
+const fn get_i32_size(i: i32) -> u8 {
   let actual_bits = 32 - i.abs().leading_zeros() + 1;
   // +1 because of signing bit
 

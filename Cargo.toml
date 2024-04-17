@@ -5,6 +5,7 @@ members = [
   "lib/x-flipper-360",
   "lib/soiboy",
   "lib/matryoshka",
+  "lib/indctive",
 ]
 
 [profile.release]

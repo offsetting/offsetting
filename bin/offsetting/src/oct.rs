@@ -1,10 +1,11 @@
 use std::fmt::{Display, Formatter};
-use std::fs::{create_dir, File};
+use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::{Parser, Subcommand, ValueEnum};
 use indexmap::IndexMap;
+
 use matryoshka::{ContainerData, Data};
 
 #[derive(Parser)]
@@ -60,7 +61,7 @@ enum Command {
     #[clap(short, long, default_value_t = Format::Json)]
     format: Format,
     #[clap(short = 't', long)]
-    file_input_path: Option<PathBuf>,
+    unpack_textures: bool,
   },
   Encode {
     in_file: PathBuf,
@@ -70,42 +71,106 @@ enum Command {
     #[clap(short, long, default_value_t = Format::Json)]
     format: Format,
     #[clap(short = 't', long)]
-    file_output_path: Option<PathBuf>,
+    repack_textures: bool,
   },
 }
 
+impl OctModule {
+  pub(super) fn execute(self) -> anyhow::Result<()> {
+    match self.command {
+      Command::Decode {
+        in_file,
+        out_file,
+        format,
+        unpack_textures,
+      } => {
+        let mut file = BufReader::new(File::open(in_file)?);
+
+        let (mut data, endian) = matryoshka::decode(&mut file)?;
+        println!("Read file with endian: {}", endian);
+
+        if unpack_textures {
+          let texture_output = out_file.with_extension(".textures");
+
+          if !texture_output.exists() {
+            fs::create_dir(&texture_output)?;
+          }
+
+          println!(
+            "Extracting textures to: {}",
+            texture_output.to_string_lossy()
+          );
+          find_and_extract_textures(&mut data, &texture_output)?;
+        }
+
+        let mut file = BufWriter::new(File::create(out_file)?);
+
+        match format {
+          Format::Json => serde_json::to_writer_pretty(&mut file, &data)?,
+          Format::Yaml => serde_yaml::to_writer(&mut file, &data)?,
+        }
+      }
+      Command::Encode {
+        in_file,
+        out_file,
+        endian,
+        format,
+        repack_textures,
+      } => {
+        let file = BufReader::new(File::open(in_file)?);
+        let mut data = match format {
+          Format::Json => serde_json::from_reader(file)?,
+          Format::Yaml => serde_yaml::from_reader(file)?,
+        };
+
+        if repack_textures {
+          let texture_input = out_file.with_extension(".textures");
+
+          println!("Loading textures from: {}", texture_input.to_string_lossy());
+          find_and_set_textures(&mut data, &texture_input)?;
+        }
+
+        let mut file = BufWriter::new(File::create(out_file)?);
+        matryoshka::encode(&mut file, data, endian.into())?;
+      }
+    }
+
+    Ok(())
+  }
+}
+
+const TEXTURE_PREFIX: &str = "Texture#";
+const NAME_KEY: &str = "Name";
+const DATA_KEY: &str = "Data";
+const DDS: &str = "dds";
+
 fn find_and_extract_textures(
   data: &mut IndexMap<String, ContainerData>,
-  output_path: &PathBuf,
+  output_path: &Path,
 ) -> anyhow::Result<()> {
   for (key, data) in data {
     match data {
-      ContainerData::Single(data) => {
-        if let Data::Container(container) = data {
-          if key.contains("Texture#") {
-            match (container.get("Name"), container.get("Data")) {
-              (
-                Some(ContainerData::Single(Data::String(texture_name))),
-                Some(ContainerData::Single(texture_data_obj)),
-              ) => {
-                if let Data::Binary(texture_data) = texture_data_obj {
-                  let file_name = format!("{}.dds", texture_name);
-                  let mut texture_file = File::create(output_path.join(PathBuf::from(&file_name)))?;
-                  texture_file.write(texture_data)?;
+      ContainerData::Single(Data::Container(container)) => {
+        if key.starts_with(TEXTURE_PREFIX) {
+          if let (
+            Some(ContainerData::Single(Data::String(name))),
+            Some(ContainerData::Single(Data::Binary(data))),
+          ) = (container.get(NAME_KEY), container.get(DATA_KEY))
+          {
+            let out = output_path.join(name).with_extension(DDS);
+            let mut texture_file = File::create(out)?;
+            texture_file.write_all(data)?;
 
-                  *container.get_mut("Data").unwrap() =
-                    ContainerData::Single(Data::String(format!("file:{}", file_name)));
-                  continue;
-                }
-              }
-              _ => (),
-            }
+            *container.get_mut(DATA_KEY).unwrap() =
+              ContainerData::Single(Data::String(format!("file:{}.{}", name, DDS)));
+            continue;
           }
-
-          find_and_extract_textures(container, output_path)?;
         }
+
+        find_and_extract_textures(container, output_path)?;
       }
-      _ => unimplemented!("During texture replacing: Multiple container data is not a thing."),
+      ContainerData::Single(_) => {}
+      _ => unimplemented!("find_and_extract_textures: Multiple container data is not a thing."),
     }
   }
 
@@ -114,12 +179,12 @@ fn find_and_extract_textures(
 
 fn find_and_set_textures(
   data: &mut IndexMap<String, ContainerData>,
-  input_path: &PathBuf,
+  input_path: &Path,
 ) -> anyhow::Result<()> {
   for data in data.values_mut() {
     match data {
       ContainerData::Multiple(_) => {
-        unimplemented!("During texture replacing: Multiple container data is not a thing.")
+        unimplemented!("find_and_set_textures: Multiple container data is not a thing.")
       }
       ContainerData::Single(Data::Container(container)) => {
         find_and_set_textures(container, input_path)?;
@@ -138,60 +203,4 @@ fn find_and_set_textures(
   }
 
   Ok(())
-}
-
-impl OctModule {
-  pub(super) fn execute(self) -> anyhow::Result<()> {
-    match self.command {
-      Command::Decode {
-        in_file,
-        out_file,
-        format,
-        file_input_path: file_input_path,
-      } => {
-        let mut file = BufReader::new(File::open(in_file)?);
-
-        let (mut data, endian) = matryoshka::decode(&mut file)?;
-        println!("Read file with endian: {}", endian);
-
-        if let Some(output_path) = file_input_path {
-          if !output_path.exists() {
-            create_dir(&output_path)?;
-          }
-
-          println!("{:?}", output_path);
-          find_and_extract_textures(&mut data, &output_path)?;
-        }
-
-        let mut file = BufWriter::new(File::create(out_file)?);
-
-        match format {
-          Format::Json => serde_json::to_writer_pretty(&mut file, &data)?,
-          Format::Yaml => serde_yaml::to_writer(&mut file, &data)?,
-        }
-      }
-      Command::Encode {
-        in_file,
-        out_file,
-        endian,
-        format,
-        file_output_path,
-      } => {
-        let file = BufReader::new(File::open(in_file)?);
-        let mut data = match format {
-          Format::Json => serde_json::from_reader(file)?,
-          Format::Yaml => serde_yaml::from_reader(file)?,
-        };
-
-        if let Some(input_path) = file_output_path {
-          find_and_set_textures(&mut data, &input_path)?;
-        }
-
-        let mut file = BufWriter::new(File::create(out_file)?);
-        matryoshka::encode(&mut file, data, endian.into())?;
-      }
-    }
-
-    Ok(())
-  }
 }

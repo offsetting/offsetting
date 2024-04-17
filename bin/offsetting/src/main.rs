@@ -1,8 +1,10 @@
+use crate::dct::DctModule;
 use clap::{Parser, Subcommand};
 
 use crate::oct::OctModule;
 use crate::x360::X360Module;
 
+mod dct;
 mod oct;
 mod x360;
 
@@ -17,6 +19,7 @@ pub struct Offsetting {
 enum Module {
   X360(X360Module),
   Oct(OctModule),
+  Dct(DctModule),
 }
 
 impl Offsetting {
@@ -24,6 +27,7 @@ impl Offsetting {
     match self.module {
       Module::X360(module) => module.execute(),
       Module::Oct(module) => module.execute(),
+      Module::Dct(module) => module.execute(),
     }
   }
 }

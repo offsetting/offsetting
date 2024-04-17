@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 clap = { version = "4.5", default-features = false, features = ["std", "color", "help", "usage", "error-context", "suggestions", "derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
 anyhow = { version = "1.0", default-features = false, features = ["std"] }
+serde = { version = "1.0.197", features = ["derive"] }
 serde_yaml = { version = "0.9", default-features = false }
 colored = { version = "2.1", default-features = false }
 indicatif = { version = "0.17", default-features = false }
@@ -16,3 +17,4 @@ indexmap = { version = "2.0", default-features = false, features = ["serde"] }
 x-flipper-360 = { path = "../../lib/x-flipper-360" }
 soiboy = { path = "../../lib/soiboy" }
 matryoshka = { path = "../../lib/matryoshka" }
+indctive = { path = "../../lib/indctive" }

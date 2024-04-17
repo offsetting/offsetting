@@ -1,0 +1,9 @@
+[package]
+name = "indctive"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+binrw = "0.13"
+jenkins_hash = "0.2"
+thiserror = "1.0"

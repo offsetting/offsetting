@@ -53,6 +53,7 @@ jobs:
           perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" lib/soiboy/Cargo.toml     
           perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" lib/x-flipper-360/Cargo.toml
           perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" lib/matryoshka/Cargo.toml
+          perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" lib/indctive/Cargo.toml
 
           perl -pi -w -e "s/0\\.0\\.0-git/${{ steps.meta.outputs.version }}/g;" Cargo.lock
 

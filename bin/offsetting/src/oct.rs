@@ -90,11 +90,7 @@ impl OctModule {
         println!("Read file with endian: {}", endian);
 
         if unpack_textures {
-          let texture_output = out_file.with_extension(".textures");
-
-          if !texture_output.exists() {
-            fs::create_dir(&texture_output)?;
-          }
+          let texture_output = out_file.with_extension("textures");
 
           println!(
             "Extracting textures to: {}",
@@ -117,14 +113,14 @@ impl OctModule {
         format,
         repack_textures,
       } => {
-        let file = BufReader::new(File::open(in_file)?);
+        let file = BufReader::new(File::open(&in_file)?);
         let mut data = match format {
           Format::Json => serde_json::from_reader(file)?,
           Format::Yaml => serde_yaml::from_reader(file)?,
         };
 
         if repack_textures {
-          let texture_input = out_file.with_extension(".textures");
+          let texture_input = in_file.with_extension("textures");
 
           println!("Loading textures from: {}", texture_input.to_string_lossy());
           find_and_set_textures(&mut data, &texture_input)?;
@@ -140,7 +136,7 @@ impl OctModule {
 }
 
 const TEXTURE_PREFIX: &str = "Texture#";
-const NAME_KEY: &str = "Name";
+const PATH_KEY: &str = "SourceFilePath";
 const DATA_KEY: &str = "Data";
 const DDS: &str = "dds";
 
@@ -153,16 +149,24 @@ fn find_and_extract_textures(
       ContainerData::Single(Data::Container(container)) => {
         if key.starts_with(TEXTURE_PREFIX) {
           if let (
-            Some(ContainerData::Single(Data::String(name))),
+            Some(ContainerData::Single(Data::String(path))),
             Some(ContainerData::Single(Data::Binary(data))),
-          ) = (container.get(NAME_KEY), container.get(DATA_KEY))
+          ) = (container.get(PATH_KEY), container.get(DATA_KEY))
           {
-            let out = output_path.join(name).with_extension(DDS);
-            let mut texture_file = File::create(out)?;
+            let out = output_path.join(path.replace('\\', std::path::MAIN_SEPARATOR_STR)).with_extension(DDS);
+            println!("Extracting: {}", out.to_string_lossy());
+
+            if let Some(parent) = out.parent() {
+              if !parent.exists() {
+                fs::create_dir_all(parent)?;
+              }
+            }
+
+            let mut texture_file = File::create(&out)?;
             texture_file.write_all(data)?;
 
             *container.get_mut(DATA_KEY).unwrap() =
-              ContainerData::Single(Data::String(format!("file:{}.{}", name, DDS)));
+              ContainerData::Single(Data::String(format!("file:{}", out.strip_prefix(output_path)?.to_string_lossy())));
             continue;
           }
         }
@@ -191,7 +195,9 @@ fn find_and_set_textures(
       }
       ContainerData::Single(Data::String(string_content)) => {
         if let Some(file_name) = string_content.strip_prefix("file:") {
-          let mut texture_file = File::open(input_path.join(file_name))?;
+          let path = input_path.join(file_name);
+          println!("Embedding: {}", path.to_string_lossy());
+          let mut texture_file = File::open(&path)?;
           let mut texture_buf = Vec::new();
           texture_file.read_to_end(&mut texture_buf)?;
 

@@ -246,7 +246,7 @@ impl TryFrom<NodeData> for Data {
         let mut childs = IndexMap::new();
         for node in child {
           if childs.contains_key(&node.id) {
-            let data = childs.remove(&node.id).unwrap();
+            let data = childs.swap_remove(&node.id).unwrap(); // TODO maybe shift remove
             match data {
               ContainerData::Single(first) => childs.insert(
                 node.id,

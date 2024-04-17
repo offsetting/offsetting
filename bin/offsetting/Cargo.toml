@@ -11,6 +11,7 @@ anyhow = { version = "1.0", default-features = false, features = ["std"] }
 serde_yaml = { version = "0.9", default-features = false }
 colored = { version = "2.1", default-features = false }
 indicatif = { version = "0.17", default-features = false }
+indexmap = { version = "2.0", default-features = false, features = ["serde"] }
 
 x-flipper-360 = { path = "../../lib/x-flipper-360" }
 soiboy = { path = "../../lib/soiboy" }

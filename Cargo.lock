@@ -435,6 +435,7 @@ dependencies = [
  "anyhow",
  "clap",
  "colored",
+ "indexmap",
  "indicatif",
  "matryoshka",
  "serde_json",

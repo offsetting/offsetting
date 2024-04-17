@@ -329,7 +329,7 @@ impl BinWrite for RawNode {
       NodeData::Uuid(uuid) => {
         writer.write_type(&16u8, endian)?;
         let bytes = match endian {
-          Endian::Big => uuid.as_bytes().clone(),
+          Endian::Big => *uuid.as_bytes(),
           Endian::Little => uuid.to_bytes_le(),
         };
         writer.write_all(&bytes)?;

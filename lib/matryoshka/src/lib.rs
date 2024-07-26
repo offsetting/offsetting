@@ -1,10 +1,9 @@
-use std::io::{Read, Seek, SeekFrom, Write};
-
 use anyhow::anyhow;
 pub use binrw::Endian;
 use binrw::{BinReaderExt, BinWriterExt, NullString};
 use indexmap::{IndexMap, IndexSet};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use std::io::{Read, Seek, SeekFrom, Write};
 use uuid::Uuid;
 
 use crate::header::OctHeader;
@@ -20,6 +19,22 @@ pub enum ContainerData {
   Multiple(Vec<Data>),
 }
 
+fn deserialize_f64_null_as_nan<'de, D: Deserializer<'de>>(des: D) -> Result<f32, D::Error> {
+  let optional = Option::<f32>::deserialize(des)?;
+  Ok(optional.unwrap_or(f32::NAN))
+}
+
+fn deserialize_vec_f64_null_as_nan<'de, D: Deserializer<'de>>(
+  des: D,
+) -> Result<Vec<f32>, D::Error> {
+  Ok(
+    Vec::<Option<f32>>::deserialize(des)?
+      .iter()
+      .map(|val| val.unwrap_or(f32::NAN))
+      .collect(),
+  )
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Data {
@@ -31,8 +46,8 @@ pub enum Data {
   Int(i32),
   IntVec(Vec<i32>),
 
-  Float(f32),
-  FloatVec(Vec<f32>),
+  Float(#[serde(deserialize_with = "deserialize_f64_null_as_nan")] f32),
+  FloatVec(#[serde(deserialize_with = "deserialize_vec_f64_null_as_nan")] Vec<f32>),
 
   String(String),
   StringVec(Vec<String>),

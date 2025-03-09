@@ -69,7 +69,7 @@ jobs:
         run: mv target/release/offsetting.exe offsetting_${{ matrix.os }}.exe
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: offsetting_${{ matrix.os }}
           path: offsetting_${{ matrix.os }}*

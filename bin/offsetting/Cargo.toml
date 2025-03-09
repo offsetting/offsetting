@@ -6,6 +6,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 clap = { version = "4.5", default-features = false, features = ["std", "color", "help", "usage", "error-context", "suggestions", "derive"] }
+clap-num = "1.2.0"
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
 anyhow = { version = "1.0", default-features = false, features = ["std"] }
 serde = { version = "1.0.197", features = ["derive"] }
@@ -18,3 +19,5 @@ x-flipper-360 = { path = "../../lib/x-flipper-360" }
 soiboy = { path = "../../lib/soiboy" }
 matryoshka = { path = "../../lib/matryoshka" }
 indctive = { path = "../../lib/indctive" }
+whynow = { path = "../../lib/whynow" }
+log = "0.4.26"

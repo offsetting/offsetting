@@ -6,6 +6,7 @@ members = [
   "lib/soiboy",
   "lib/matryoshka",
   "lib/indctive",
+  "lib/whynow",
 ]
 
 [profile.release]

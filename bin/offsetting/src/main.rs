@@ -2,10 +2,12 @@ use crate::dct::DctModule;
 use clap::{Parser, Subcommand};
 
 use crate::oct::OctModule;
+use crate::whynow::{WhyJustWhyModule, WhyModule, WhyNowModule};
 use crate::x360::X360Module;
 
 mod dct;
 mod oct;
+mod whynow;
 mod x360;
 
 #[derive(Parser)]
@@ -20,6 +22,11 @@ enum Module {
   X360(X360Module),
   Oct(OctModule),
   Dct(DctModule),
+  #[command(name = "whynow")]
+  WhyNow(WhyNowModule),
+  Why(WhyModule),
+  #[command(name = "whyjustwhy")]
+  WhyJustWhy(WhyJustWhyModule),
 }
 
 impl Offsetting {
@@ -28,6 +35,9 @@ impl Offsetting {
       Module::X360(module) => module.execute(),
       Module::Oct(module) => module.execute(),
       Module::Dct(module) => module.execute(),
+      Module::WhyNow(module) => module.execute(),
+      Module::Why(module) => module.execute(),
+      Module::WhyJustWhy(module) => module.execute(),
     }
   }
 }

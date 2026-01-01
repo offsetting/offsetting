@@ -8,6 +8,7 @@ use indexmap::IndexMap;
 
 use matryoshka::{ContainerData, Data};
 
+/// Encodes/decodes Tupperware files (.oct/.mer/.bent/etc.)
 #[derive(Parser)]
 pub(super) struct OctModule {
   #[clap(subcommand)]

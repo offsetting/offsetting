@@ -18,3 +18,5 @@ x-flipper-360 = { path = "../../lib/x-flipper-360" }
 soiboy = { path = "../../lib/soiboy" }
 matryoshka = { path = "../../lib/matryoshka" }
 indctive = { path = "../../lib/indctive" }
+whynow = { path = "../../lib/whynow" }
+log = "0.4.26"

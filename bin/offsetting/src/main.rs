@@ -2,11 +2,13 @@ use crate::dct::DctModule;
 use clap::{Parser, Subcommand};
 
 use crate::oct::OctModule;
-use crate::x360::X360Module;
+use crate::whynow::{DI3ZipModule, C2ZipModule, C3ZipModule};
+use crate::rre_package::RREPackageModule;
 
 mod dct;
 mod oct;
-mod x360;
+mod whynow;
+mod rre_package;
 
 #[derive(Parser)]
 #[clap(version)]
@@ -17,17 +19,27 @@ pub struct Offsetting {
 
 #[derive(Subcommand)]
 enum Module {
-  X360(X360Module),
+  #[command(name = "rre-package")]
+  RREPackage(RREPackageModule),
   Oct(OctModule),
   Dct(DctModule),
+  #[command(name = "zip-c2", visible_alias = "zip")]
+  C2Zip(C2ZipModule),
+  #[command(name = "zip-di3")]
+  DI3Zip(DI3ZipModule),
+  #[command(name = "zip-c3")]
+  C3Zip(C3ZipModule),
 }
 
 impl Offsetting {
   pub fn execute(self) -> anyhow::Result<()> {
     match self.module {
-      Module::X360(module) => module.execute(),
+      Module::RREPackage(module) => module.execute(),
       Module::Oct(module) => module.execute(),
       Module::Dct(module) => module.execute(),
+      Module::C2Zip(module) => module.execute(),
+      Module::DI3Zip(module) => module.execute(),
+      Module::C3Zip(module) => module.execute(),
     }
   }
 }

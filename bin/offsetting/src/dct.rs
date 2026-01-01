@@ -85,6 +85,7 @@ fn write_dct_file<P: AsRef<Path>>(path: P, dct_map: &DctMap) -> anyhow::Result<(
   Ok(())
 }
 
+/// Packs/unpacks Devon localization dictionaries (.dct)
 #[derive(Parser, Debug)]
 pub struct DctModule {
   #[clap(subcommand)]

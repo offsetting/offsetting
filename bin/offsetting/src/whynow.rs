@@ -10,7 +10,7 @@ fn decode_encryption_key(hex_string: &str) -> Result<[u8; 16], String> {
   )
 }
 
-/// Creates unencrypted new octane zips. e.g. Cars 3: DTW
+/// Creates new, unencrypted octane zips, for use in Cars 3: Driven to Win
 #[derive(Parser)]
 #[command(about)]
 pub struct C3ZipModule {
@@ -18,7 +18,7 @@ pub struct C3ZipModule {
   out_file: PathBuf,
 }
 
-/// Creates old octane zips. e.g. Cars 2, Toy Story, DI 1.0 and 2.0
+/// Creates old octane zips, for use in Cars 2, Toy Story 3, and Disney Infinity 1.0/2.0
 #[derive(Parser)]
 #[command(about)]
 pub struct C2ZipModule {
@@ -26,7 +26,7 @@ pub struct C2ZipModule {
   out_file: PathBuf,
 }
 
-/// Creates encrypted new octane zips. e.g. DI 3.0
+/// Creates new, encrypted octane zips, for use in Disney Infinity 3.0
 #[derive(Parser)]
 #[command(about)]
 pub struct DI3ZipModule {

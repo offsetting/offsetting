@@ -13,7 +13,7 @@ fn decode_encryption_key(hex_string: &str) -> Result<[u8; 16], String> {
 /// Creates unencrypted new octane zips. e.g. Cars 3: DTW
 #[derive(Parser)]
 #[command(about)]
-pub struct WhyNowModule {
+pub struct C3ZipModule {
   in_folder: PathBuf,
   out_file: PathBuf,
 }
@@ -21,7 +21,7 @@ pub struct WhyNowModule {
 /// Creates old octane zips. e.g. Cars 2, Toy Story, DI 1.0 and 2.0
 #[derive(Parser)]
 #[command(about)]
-pub struct WhyModule {
+pub struct C2ZipModule {
   in_folder: PathBuf,
   out_file: PathBuf,
 }
@@ -29,7 +29,7 @@ pub struct WhyModule {
 /// Creates encrypted new octane zips. e.g. DI 3.0
 #[derive(Parser)]
 #[command(about)]
-pub struct WhyJustWhyModule {
+pub struct DI3ZipModule {
   in_folder: PathBuf,
   out_file: PathBuf,
   /// A 16 byte hex string of the encryption key. Ask your friends... 😂
@@ -37,7 +37,7 @@ pub struct WhyJustWhyModule {
   encryption_key: [u8; 16],
 }
 
-impl WhyNowModule {
+impl C3ZipModule {
   pub fn execute(self) -> anyhow::Result<()> {
     whynow::write_octane_zip(
       &self.in_folder,
@@ -47,7 +47,7 @@ impl WhyNowModule {
   }
 }
 
-impl WhyModule {
+impl C2ZipModule {
   pub fn execute(self) -> anyhow::Result<()> {
     whynow::write_octane_zip(
       &self.in_folder,
@@ -57,7 +57,7 @@ impl WhyModule {
   }
 }
 
-impl WhyJustWhyModule {
+impl DI3ZipModule {
   pub fn execute(self) -> anyhow::Result<()> {
     whynow::write_octane_zip(
       &self.in_folder,

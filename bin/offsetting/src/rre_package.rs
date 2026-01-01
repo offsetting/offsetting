@@ -9,7 +9,7 @@ use soiboy::{ComponentData, SoiSoup, Str};
 use x_flipper_360::{convert_to_dds, TextureHeader, TextureSize2D};
 
 #[derive(Parser)]
-pub(super) struct X360Module {
+pub(super) struct RREPackageModule {
   #[clap(subcommand)]
   action: Action,
 }
@@ -34,7 +34,7 @@ pub(crate) struct LsAction {
   toc: PathBuf,
 }
 
-impl X360Module {
+impl RREPackageModule {
   pub(super) fn execute(&self) -> anyhow::Result<()> {
     match &self.action {
       Action::Unpack(action) => action.execute(),

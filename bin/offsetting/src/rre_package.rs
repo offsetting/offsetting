@@ -17,7 +17,6 @@ pub(super) struct RREPackageModule {
 #[derive(Subcommand)]
 pub(crate) enum Action {
   Unpack(UnpackAction),
-  Repack,
   Ls(LsAction),
 }
 
@@ -38,7 +37,6 @@ impl RREPackageModule {
   pub(super) fn execute(&self) -> anyhow::Result<()> {
     match &self.action {
       Action::Unpack(action) => action.execute(),
-      Action::Repack => Ok(()),
       Action::Ls(action) => action.execute(),
     }
   }

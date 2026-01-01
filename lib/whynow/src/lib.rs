@@ -8,8 +8,8 @@ use std::io::{BufWriter, Cursor, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-fn map_bytes_to_string(data: Vec<u8>) -> Result<String, std::str::Utf8Error> {
-  std::str::from_utf8(&data).map(|str_slice| str_slice.to_string())
+fn map_bytes_to_string(data: Vec<u8>) -> Result<String, std::string::FromUtf8Error> {
+  String::from_utf8(data)
 }
 
 fn map_string_to_bytes(string: &String) -> &[u8] {

@@ -3,7 +3,6 @@ resolver = "2"
 members = [
   "bin/offsetting",
   "lib/x-flipper-360",
-  "lib/soiboy",
   "lib/matryoshka",
   "lib/indctive",
   "lib/whynow",

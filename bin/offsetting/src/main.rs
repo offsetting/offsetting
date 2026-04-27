@@ -2,13 +2,13 @@ use crate::dct::DctModule;
 use clap::{Parser, Subcommand};
 
 use crate::oct::OctModule;
-use crate::whynow::{DI3ZipModule, C2ZipModule, C3ZipModule};
 use crate::rre_package::RREPackageModule;
+use crate::whynow::{C2ZipModule, C3ZipModule, DI3ZipModule};
 
 mod dct;
 mod oct;
-mod whynow;
 mod rre_package;
+mod whynow;
 
 #[derive(Parser)]
 #[clap(version)]

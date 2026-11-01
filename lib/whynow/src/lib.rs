@@ -1,6 +1,5 @@
 use aes::cipher::{KeyIvInit, StreamCipher, StreamCipherSeek};
 use binrw::{binrw, BinResult, BinWrite};
-use flate2::write::DeflateEncoder;
 use flate2::{Compress, Compression, Crc, FlushCompress};
 use rayon::prelude::*;
 use md5::Digest;
@@ -180,6 +179,14 @@ fn read_full<R: Read>(reader: &mut R, buf: &mut [u8]) -> std::io::Result<usize> 
   Ok(total)
 }
 
+// returns the number of bytes left to read, leaving the reader's position unchanged.
+fn remaining_len<R: Seek>(reader: &mut R) -> std::io::Result<u64> {
+  let position = reader.stream_position()?;
+  let end = reader.seek(SeekFrom::End(0))?;
+  reader.seek(SeekFrom::Start(position))?;
+  Ok(end - position)
+}
+
 // compresses a block of data using the DEFLATE algorithm and returns the compressed data along with its CRC32 checksum.
 fn deflate_block(block: &[u8]) -> std::io::Result<(Vec<u8>, Crc)> {
   let mut compress = Compress::new(Compression::default(), false);
@@ -204,6 +211,67 @@ fn deflate_block(block: &[u8]) -> std::io::Result<(Vec<u8>, Crc)> {
   Ok((out, crc))
 }
 
+/// A whole file compressed in memory, ready to be written as a zip entry.
+pub struct CompressedFileData {
+  zip_file_name: String,
+  compressed_bytes: Vec<u8>,
+  compressed_size: u32,
+  uncompressed_size: u32,
+  file_crc: u32,
+  md5_hash: [u8; 16],
+}
+
+// reads and compresses a whole file in memory. Doesn't touch the zip writer, so it can run on any thread.
+fn compress_file_in_memory(path: &Path, zip_file_name: &str) -> anyhow::Result<CompressedFileData> {
+  let data = std::fs::read(path)?;
+  let (mut compressed_bytes, crc) = deflate_block(&data)?;
+  // empty final block, same as the streaming path
+  compressed_bytes.extend_from_slice(&[0x03, 0x00]);
+
+  let mut md5_hash = [0u8; 16];
+  md5_hash.copy_from_slice(&md5::Md5::digest(&data));
+
+  Ok(CompressedFileData {
+    zip_file_name: zip_file_name.to_string(),
+    compressed_size: compressed_bytes.len() as u32,
+    uncompressed_size: data.len() as u32,
+    file_crc: crc.sum(),
+    md5_hash,
+    compressed_bytes,
+  })
+}
+
+fn write_compressed_file_to_octane_zip<W: Write + Seek>(
+  writer: &mut W,
+  file_data: &CompressedFileData,
+) -> BinResult<FileInfo> {
+  let header_offset = writer.stream_position()?;
+
+  ZipFileRecordHeader {
+    version: 20,
+    flags: 0,
+    compression_type: ZipCompressionType::CompDeflate,
+    file_time: 0xA1C3,
+    file_date: 0x742F,
+    file_crc: file_data.file_crc,
+    compressed_size: file_data.compressed_size,
+    uncompressed_size: file_data.uncompressed_size,
+    file_name: file_data.zip_file_name.clone(),
+    file_extra_field: Vec::new(),
+  }
+  .write(writer)?;
+  writer.write_all(&file_data.compressed_bytes)?;
+
+  Ok(FileInfo {
+    header_offset: header_offset as u32,
+    uncompressed_size: file_data.uncompressed_size,
+    compressed_size: file_data.compressed_size,
+    file_crc: file_data.file_crc,
+    md5_hash: file_data.md5_hash,
+    file_name: file_data.zip_file_name.clone(),
+  })
+}
+
 fn write_file_to_octane_zip<W: Write + Seek, R: Read + Seek>(
   writer: &mut W,
   file_reader: &mut R,
@@ -218,13 +286,16 @@ fn write_file_to_octane_zip<W: Write + Seek, R: Read + Seek>(
   let mut md5 = md5::Md5::new();
   let mut crc = Crc::new();
   let block_per_batch = rayon::current_num_threads();
+  let mut remaining = remaining_len(file_reader)?;
 
   loop {
     // read per batch of blocks
     let mut blocks: Vec<Vec<u8>> = Vec::with_capacity(block_per_batch);
     for _ in 0..block_per_batch {
-      let mut block = vec![0u8; DEFLATE_BLOCK_SIZE];
+      // don't allocate a full 4MB block for small files
+      let mut block = vec![0u8; remaining.min(DEFLATE_BLOCK_SIZE as u64) as usize];
       let bytes_read = read_full(file_reader, &mut block)?;
+      remaining = remaining.saturating_sub(bytes_read as u64);
       block.truncate(bytes_read);
       if bytes_read > 0 {
         blocks.push(block);
@@ -258,7 +329,7 @@ fn write_file_to_octane_zip<W: Write + Seek, R: Read + Seek>(
       crc.combine(&block_crc);
     }
   }
-  
+
   writer.write_all(&[0x03, 0x00])?;
 
   let file_end = writer.stream_position()?;
@@ -358,6 +429,14 @@ pub trait ZipWriter {
     zip_file_name: &str,
   ) -> BinResult<FileInfo> {
     write_file_to_octane_zip(writer, reader, &zip_file_name)
+  }
+
+  fn write_compressed_file<W: Write + Seek>(
+    &mut self,
+    writer: &mut W,
+    file_data: &CompressedFileData,
+  ) -> BinResult<FileInfo> {
+    write_compressed_file_to_octane_zip(writer, file_data)
   }
 
   fn write_footer<W: Write + Seek>(
@@ -501,6 +580,21 @@ impl EncryptedNewOctaneZipWriter<'_> {
   ) -> EncryptedWriter<'a, W> {
     self.create_encrypted_writer_with_disable_position(writer, None)
   }
+
+  fn create_file_writer<'a, W: Write + Seek>(
+    &self,
+    writer: &'a mut W,
+    zip_file_name: &str,
+  ) -> EncryptedWriter<'a, W> {
+    if !zip_file_name.to_lowercase().ends_with(".dct") {
+      self.create_encrypted_writer_with_disable_position(
+        writer,
+        Some(0x200 + calculate_file_record_header_size(zip_file_name) as u64),
+      )
+    } else {
+      self.create_encrypted_writer(writer)
+    }
+  }
 }
 
 impl ZipWriter for EncryptedNewOctaneZipWriter<'_> {
@@ -522,20 +616,19 @@ impl ZipWriter for EncryptedNewOctaneZipWriter<'_> {
     reader: &mut R,
     zip_file_name: &str,
   ) -> BinResult<FileInfo> {
-    let mut encrypted_writer = if !zip_file_name.to_lowercase().ends_with(".dct") {
-      // only encrypt the first 0x200 bytes of a file
-      self.create_encrypted_writer_with_disable_position(
-        writer,
-        Some(0x200 + calculate_file_record_header_size(zip_file_name) as u64),
-      )
-    } else {
-      // dct files are fully encrypted for some reason
-      // aluigi wrote the total opposite in a comment in his bms script.
-      // Why are you capping? Brother frfr 😐
-      self.create_encrypted_writer(writer)
-    };
+    let mut encrypted_writer = self.create_file_writer(writer, zip_file_name);
 
     NewOctaneZipWriter.write_file(&mut encrypted_writer, reader, zip_file_name)
+  }
+
+  fn write_compressed_file<W: Write + Seek>(
+    &mut self,
+    writer: &mut W,
+    file_data: &CompressedFileData,
+  ) -> BinResult<FileInfo> {
+    let mut encrypted_writer = self.create_file_writer(writer, &file_data.zip_file_name);
+
+    NewOctaneZipWriter.write_compressed_file(&mut encrypted_writer, file_data)
   }
 
   fn write_footer<W: Write + Seek>(
@@ -590,11 +683,35 @@ impl ZipWriter for OldOctaneZipWriter {
   }
 }
 
+// compresses a batch of small files in parallel, then writes them in order.
+fn write_compressed_batch<ZW: ZipWriter, W: Write + Seek>(
+  zip_writer: &mut ZW,
+  writer: &mut W,
+  batch: &[(&PathBuf, &String)],
+  file_infos: &mut Vec<FileInfo>,
+) -> anyhow::Result<()> {
+  let compressed_files = batch
+    .par_iter()
+    .map(|(path, zip_file_name)| compress_file_in_memory(path, zip_file_name))
+    .collect::<anyhow::Result<Vec<_>>>()?;
+
+  for file_data in &compressed_files {
+    file_infos.push(zip_writer.write_compressed_file(writer, file_data)?);
+  }
+
+  Ok(())
+}
+
 pub fn write_octane_zip<ZW: ZipWriter>(
   source_folder: &Path,
   output_file_path: &Path,
   zip_writer: &mut ZW,
 ) -> anyhow::Result<()> {
+  // files from this size are streamed block by block instead of being compressed in memory
+  const LARGE_FILE_THRESHOLD: u64 = 64 * 1024 * 1024;
+  // max amount of uncompressed small file data held in memory per batch
+  const BATCH_BYTE_BUDGET: u64 = 256 * 1024 * 1024;
+
   let all_file_paths = get_all_file_paths(source_folder);
   if all_file_paths.is_empty() {
     return Err(anyhow::Error::msg(
@@ -620,13 +737,35 @@ pub fn write_octane_zip<ZW: ZipWriter>(
   ))?;
 
   let mut file_infos = Vec::with_capacity(all_file_paths.len());
-  for (file_path, zip_file_name) in all_file_paths.iter().zip(zip_file_names.iter()) {
-    let mut file_reader = File::open(file_path)?;
-    let file_info =
-      zip_writer.write_file(&mut octane_zip_writer, &mut file_reader, &zip_file_name)?;
+  let mut batch: Vec<(&PathBuf, &String)> = Vec::new();
+  let mut batch_bytes = 0u64;
 
-    file_infos.push(file_info);
+  for (file_path, zip_file_name) in all_file_paths.iter().zip(zip_file_names.iter()) {
+    let file_size = std::fs::metadata(file_path)?.len();
+
+    if file_size >= LARGE_FILE_THRESHOLD {
+      // write the queued small files first so the files stay in order
+      write_compressed_batch(zip_writer, &mut octane_zip_writer, &batch, &mut file_infos)?;
+      batch.clear();
+      batch_bytes = 0;
+
+      let mut file_reader = File::open(file_path)?;
+      let file_info =
+        zip_writer.write_file(&mut octane_zip_writer, &mut file_reader, zip_file_name)?;
+      file_infos.push(file_info);
+      continue;
+    }
+
+    batch.push((file_path, zip_file_name));
+    batch_bytes += file_size;
+
+    if batch_bytes >= BATCH_BYTE_BUDGET {
+      write_compressed_batch(zip_writer, &mut octane_zip_writer, &batch, &mut file_infos)?;
+      batch.clear();
+      batch_bytes = 0;
+    }
   }
+  write_compressed_batch(zip_writer, &mut octane_zip_writer, &batch, &mut file_infos)?;
 
   zip_writer.write_footer(&mut octane_zip_writer, &file_infos)?;
 
@@ -657,22 +796,20 @@ mod tests {
   pub fn test_write_file_to_octane_zip_new() {
     use std::io::Cursor;
     use flate2::read::DeflateDecoder;
+    use flate2::Crc;
     use std::io::Read;
-    use crate::{write_file_to_octane_zip, write_file_to_octane_zip_old};
+    use crate::write_file_to_octane_zip;
 
     for multiplier in [0, 100, 70000, 200000] {
       let sample_data = b"Hello, World! Testing parallel deflate compression with Rayon and flate2.".repeat(multiplier);
-      let mut reader1 = Cursor::new(sample_data.clone());
-      let mut writer1 = Cursor::new(Vec::new());
-      let info1 = write_file_to_octane_zip_old(&mut writer1, &mut reader1, "test.txt").unwrap();
-
       let mut reader2 = Cursor::new(sample_data.clone());
       let mut writer2 = Cursor::new(Vec::new());
       let info2 = write_file_to_octane_zip(&mut writer2, &mut reader2, "test.txt").unwrap();
 
-      assert_eq!(info1.file_crc, info2.file_crc);
-      assert_eq!(info1.md5_hash, info2.md5_hash);
-      assert_eq!(info1.uncompressed_size, info2.uncompressed_size);
+      let mut expected_crc = Crc::new();
+      expected_crc.update(&sample_data);
+      assert_eq!(expected_crc.sum(), info2.file_crc);
+      assert_eq!(sample_data.len() as u32, info2.uncompressed_size);
 
       let header_size = crate::calculate_file_record_header_size("test.txt");
       let compressed_data = &writer2.into_inner()[header_size..header_size + info2.compressed_size as usize];

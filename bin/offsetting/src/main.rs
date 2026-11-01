@@ -25,7 +25,7 @@ enum Module {
   Dct(DctModule),
   #[command(name = "zip-c2", visible_alias = "zip")]
   C2Zip(C2ZipModule),
-  #[command(name = "zip-di3")]
+  #[command(name = "zip-di3", visible_alias = "whyjustwhy")]
   DI3Zip(DI3ZipModule),
   #[command(name = "zip-c3")]
   C3Zip(C3ZipModule),

@@ -1,7 +1,8 @@
 use aes::cipher::{KeyIvInit, StreamCipher, StreamCipherSeek};
 use binrw::{binrw, BinResult, BinWrite};
 use flate2::write::DeflateEncoder;
-use flate2::{Compression, Crc};
+use flate2::{Compress, Compression, Crc, FlushCompress};
+use rayon::prelude::*;
 use md5::Digest;
 use std::fs::File;
 use std::io::{BufWriter, Cursor, Read, Seek, SeekFrom, Write};
@@ -166,32 +167,99 @@ pub struct FileInfo {
   pub file_name: String,
 }
 
+// reads the entire contents of a reader into a buffer, returning the number of bytes read.
+fn read_full<R: Read>(reader: &mut R, buf: &mut [u8]) -> std::io::Result<usize> {
+  let mut total = 0;
+  while total < buf.len() {
+    let n = reader.read(&mut buf[total..])?;
+    if n == 0 {
+      break;
+    }
+    total += n;
+  }
+  Ok(total)
+}
+
+// compresses a block of data using the DEFLATE algorithm and returns the compressed data along with its CRC32 checksum.
+fn deflate_block(block: &[u8]) -> std::io::Result<(Vec<u8>, Crc)> {
+  let mut compress = Compress::new(Compression::default(), false);
+  let mut out = Vec::with_capacity(block.len() / 2 + 1024);
+  let mut consumed = 0;
+
+  loop {
+    let before = compress.total_in();
+    compress
+      .compress_vec(&block[consumed..], &mut out, FlushCompress::Sync)
+      .map_err(std::io::Error::other)?;
+    consumed += (compress.total_in() - before) as usize;
+
+    if consumed == block.len() && out.len() < out.capacity() {
+      break;
+    }
+    out.reserve(4096);
+  }
+
+  let mut crc = Crc::new();
+  crc.update(block);
+  Ok((out, crc))
+}
+
 fn write_file_to_octane_zip<W: Write + Seek, R: Read + Seek>(
   writer: &mut W,
   file_reader: &mut R,
   zip_file_path: &str,
 ) -> BinResult<FileInfo> {
-  let mut read_buffer = vec![0u8; 1024 * 1024];
+  const DEFLATE_BLOCK_SIZE: usize = 4 * 1024 * 1024; // use 4MB blocks for deflate compression
 
   let header_offset = writer.stream_position()?;
   let file_record_size = calculate_file_record_header_size(zip_file_path);
   writer.seek(SeekFrom::Current(file_record_size as i64))?;
+
   let mut md5 = md5::Md5::new();
   let mut crc = Crc::new();
+  let block_per_batch = rayon::current_num_threads();
 
-  {
-    let mut compressor = DeflateEncoder::new(&mut *writer, Compression::default());
-
-    while let Ok(bytes_read) = file_reader.read(&mut read_buffer) {
-      if bytes_read == 0 {
+  loop {
+    // read per batch of blocks
+    let mut blocks: Vec<Vec<u8>> = Vec::with_capacity(block_per_batch);
+    for _ in 0..block_per_batch {
+      let mut block = vec![0u8; DEFLATE_BLOCK_SIZE];
+      let bytes_read = read_full(file_reader, &mut block)?;
+      block.truncate(bytes_read);
+      if bytes_read > 0 {
+        blocks.push(block);
+      }
+      if bytes_read < DEFLATE_BLOCK_SIZE {
         break;
       }
+    }
+    if blocks.is_empty() {
+      break;
+    }
 
-      compressor.write_all(&read_buffer[..bytes_read])?;
-      md5.update(&read_buffer[..bytes_read]);
-      crc.update(&read_buffer[..bytes_read]);
+    // MD5 update and deflate in parallel
+    let (_, result) = rayon::join(
+      || {
+        for block in &blocks {
+          md5.update(block);
+        }
+      },
+      || {
+        blocks
+          .par_iter()
+          .map(|block| deflate_block(block))
+          .collect::<std::io::Result<Vec<_>>>()
+      },
+    );
+
+    // write compressed blocks and update CRC
+    for (compressed_block, block_crc) in result? {
+      writer.write_all(&compressed_block)?;
+      crc.combine(&block_crc);
     }
   }
+  
+  writer.write_all(&[0x03, 0x00])?;
 
   let file_end = writer.stream_position()?;
   writer.seek(SeekFrom::Start(header_offset))?;
@@ -583,5 +651,35 @@ mod tests {
       &mut EncryptedNewOctaneZipWriter { key: &[0x00; 16] },
     )
     .unwrap();
+  }
+
+  #[test]
+  pub fn test_write_file_to_octane_zip_new() {
+    use std::io::Cursor;
+    use flate2::read::DeflateDecoder;
+    use std::io::Read;
+    use crate::{write_file_to_octane_zip, write_file_to_octane_zip_old};
+
+    for multiplier in [0, 100, 70000, 200000] {
+      let sample_data = b"Hello, World! Testing parallel deflate compression with Rayon and flate2.".repeat(multiplier);
+      let mut reader1 = Cursor::new(sample_data.clone());
+      let mut writer1 = Cursor::new(Vec::new());
+      let info1 = write_file_to_octane_zip_old(&mut writer1, &mut reader1, "test.txt").unwrap();
+
+      let mut reader2 = Cursor::new(sample_data.clone());
+      let mut writer2 = Cursor::new(Vec::new());
+      let info2 = write_file_to_octane_zip(&mut writer2, &mut reader2, "test.txt").unwrap();
+
+      assert_eq!(info1.file_crc, info2.file_crc);
+      assert_eq!(info1.md5_hash, info2.md5_hash);
+      assert_eq!(info1.uncompressed_size, info2.uncompressed_size);
+
+      let header_size = crate::calculate_file_record_header_size("test.txt");
+      let compressed_data = &writer2.into_inner()[header_size..header_size + info2.compressed_size as usize];
+      let mut decoder = DeflateDecoder::new(compressed_data);
+      let mut decompressed = Vec::new();
+      decoder.read_to_end(&mut decompressed).unwrap();
+      assert_eq!(decompressed, sample_data);
+    }
   }
 }
